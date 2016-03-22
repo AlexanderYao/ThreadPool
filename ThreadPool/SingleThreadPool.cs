@@ -12,6 +12,7 @@ namespace ThreadPool
 {
     public class SingleThreadPool : IThreadPool
     {
+        //private List<Thread> _threads;
         private Thread _thread;
         private AutoResetEvent _event;
         private ConcurrentQueue<WorkItem> _queue;
