@@ -12,20 +12,28 @@ namespace ThreadPool
 {
     public class SingleThreadPool : IThreadPool
     {
-        //private List<Thread> _threads;
+        private List<IThread> _threads;
+        private StartInfo _info;
         private Thread _thread;
         private AutoResetEvent _event;
         private ConcurrentQueue<WorkItem> _queue;
         private Int32 _count;
 
-        public SingleThreadPool()
+        public SingleThreadPool() : this(null) { }
+
+        public SingleThreadPool(StartInfo info)
         {
+            _info = info ?? new StartInfo();
             _event = new AutoResetEvent(false);
             _queue = new ConcurrentQueue<WorkItem>();
+            _threads = new List<IThread>(_info.MinWorkerThreads);
+
+            for (int i = 0; i < _info.MinWorkerThreads; i++)
+            {
+                _threads.Add(NewThread());
+            }
 
             _thread = new Thread(Loop);
-            //_thread.IsBackground = true;
-            _thread.SetApartmentState(ApartmentState.MTA);
             _thread.Start();
         }
 
@@ -47,6 +55,8 @@ namespace ThreadPool
             _queue.Enqueue(item);
             _event.Set();
             Debug.Print("set event");
+
+            Adjust();
         }
 
         public void WaitForAll()
@@ -59,6 +69,29 @@ namespace ThreadPool
             IsStop = true;
         }
 
+        private void Adjust()
+        {
+            if(_queue.Count > _threads.Count)
+            {
+                _threads.Add(NewThread());
+            }
+
+            foreach (var t in _threads)
+            {
+                if(t.IsIdle && t.WaitCount >= 6)
+                {
+                    t.Stop();
+                }
+            }
+        }
+
+        private IThread NewThread()
+        {
+            IThread _thread = new WorkThread();
+            _thread.Start();
+            return _thread;
+        }
+
         private void Loop()
         {
             while (!IsStop)
@@ -69,6 +102,13 @@ namespace ThreadPool
                     _event.WaitOne();
                 }
 
+                IThread t = _threads.FirstOrDefault(e => e.IsIdle);
+                if(null == t)
+                {
+                    //wait some time for idle thread
+                    continue;
+                }
+
                 WorkItem item = null;
                 bool hasItem = _queue.TryDequeue(out item);
 
@@ -77,20 +117,7 @@ namespace ThreadPool
                     continue;
                 }
 
-                SetThreadName(item.Name);
-                item.Callback.Invoke(item.State);
-            }
-        }
-
-        private void SetThreadName(String name)
-        {
-            Thread t = Thread.CurrentThread;
-
-            lock (t)
-            {
-                t.GetType().GetField("m_Name", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(t, name);
-                var threadHandle = t.GetType().GetMethod("GetNativeHandle", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(t, null);
-                t.GetType().GetMethod("InformThreadNameChange", BindingFlags.NonPublic | BindingFlags.Static).Invoke(t, new object[] { threadHandle, name, (null == name) ? name.Length : 0 });
+                t.WorkItem = item;
             }
         }
     }

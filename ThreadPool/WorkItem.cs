@@ -7,10 +7,10 @@ using System.Threading.Tasks;
 
 namespace ThreadPool
 {
-    class WorkItem
+    class WorkItem : IWorkItem
     {
-        internal String Name { get; set; }
-        internal WaitCallback Callback { get; set; }
-        internal Object State { get; set; }
+        public String Name { get; set; }
+        public WaitCallback Callback { get; set; }
+        public Object State { get; set; }
     }
 }

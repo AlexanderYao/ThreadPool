@@ -6,6 +6,9 @@ using System.Threading.Tasks;
 
 namespace ThreadPool
 {
+    /// <summary>
+    /// default：min = 2, max = 10, drop = never
+    /// </summary>
     public class StartInfo
     {
         public Int32 MinWorkerThreads { get; set; }
@@ -23,12 +26,16 @@ namespace ThreadPool
     public enum DropEnum
     {
         /// <summary>
+        /// unlimited queue length, never drop
+        /// </summary>
+        Never = 0,
+        /// <summary>
         /// when queue is full, drop the new coming
         /// </summary>
-        DropNewest,
+        DropNewest = 1,
         /// <summary>
         /// when queue is full, dequeue the head and drop it
         /// </summary>
-        DropOldest
+        DropOldest = 2
     }
 }
