@@ -10,18 +10,19 @@ namespace ThreadPool
 {
     public class WorkThread : IThread
     {
-        private const int TIME_OUT = 10 * 1000;
-        private int _waitCount;
+        private int _timeout;
         private Thread _thread;
         private bool _isStop;
+        private bool _isIdle;
         private AutoResetEvent _event;
         private IWorkItem _item;
         private object _syncRoot;
 
-        public WorkThread()
+        public WorkThread(int timeout)
         {
-            _waitCount = 0;
+            _timeout = timeout;
             _isStop = false;
+            _isIdle = false;
             _event = new AutoResetEvent(false);
             _syncRoot = new object();
 
@@ -76,10 +77,6 @@ namespace ThreadPool
 
         public ThreadState State { get { return _thread.ThreadState; } }
 
-        public int WaitCount { get { return _waitCount; } }
-
-        public bool IsIdle { get; private set; }
-
         public void Start()
         {
             _thread.Start();
@@ -94,28 +91,28 @@ namespace ThreadPool
 
         private void Loop()
         {
-            while (!_isStop)
+            while (!_isStop && !_isIdle)
             {
                 if (null == WorkItem)
                 {
-                    IsIdle = true;
-                    bool getIt = _event.WaitOne(TIME_OUT);
+                    bool getIt = _event.WaitOne(_timeout * 1000);
 
                     if (!getIt)
                     {
-                        _waitCount++;
+                        _isIdle = true;
                         continue;
                     }
                 }
 
                 lock (_syncRoot)
                 {
-                    IsIdle = false;
                     WorkItem.Callback.Invoke(WorkItem.State);
                     _item = null;
-                    IsIdle = true;
                 }
             }
+
+            //TODO
+            //trigger exit event, remove it from thread pool
         }
     }
 }

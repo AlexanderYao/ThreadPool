@@ -12,5 +12,11 @@ namespace ThreadPool
         void QueueUserWorkItem(WaitCallback callback, Object state, String name = "");
 
         void WaitForAll();
+
+        string Name { get; }
+
+        int QueueCount { get; }
+
+        int ThreadCount { get; }
     }
 }

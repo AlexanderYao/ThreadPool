@@ -14,8 +14,6 @@ namespace ThreadPool
         DateTime StartTime { get; }
         IWorkItem WorkItem { get; set; }
         ThreadState State { get; }
-        int WaitCount { get; }
-        bool IsIdle { get; }
         void Start();
         void Stop();
     }

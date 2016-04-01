@@ -7,19 +7,33 @@ using System.Threading.Tasks;
 namespace ThreadPool
 {
     /// <summary>
-    /// default：min = 2, max = 10, drop = never
+    /// default：min = 2, max = 10, drop = never, timeout = 60s
     /// </summary>
     public class StartInfo
     {
+        /// <summary>
+        /// default: min = 2
+        /// </summary>
         public Int32 MinWorkerThreads { get; set; }
+        /// <summary>
+        /// default: max = 10
+        /// </summary>
         public Int32 MaxWorkerThreads { get; set; }
+        /// <summary>
+        /// default: drop = never
+        /// </summary>
         public DropEnum DropEnum { get; set; }
+        /// <summary>
+        /// default: timeout = 60s, based on second
+        /// </summary>
+        public Int32 Timeout { get; set; }
 
         public StartInfo()
         {
             MinWorkerThreads = 2;
             MaxWorkerThreads = 10;
             DropEnum = DropEnum.DropNewest;
+            Timeout = 60;
         }
     }
 
