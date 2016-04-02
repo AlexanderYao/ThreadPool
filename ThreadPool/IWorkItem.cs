@@ -8,5 +8,6 @@ namespace ThreadPool
         WaitCallback Callback { get; set; }
         string Name { get; set; }
         object State { get; set; }
+        object Result { get; set; }
     }
 }

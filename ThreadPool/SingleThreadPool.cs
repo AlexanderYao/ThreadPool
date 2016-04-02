@@ -48,6 +48,11 @@ namespace ThreadPool
 
         public void QueueUserWorkItem(WaitCallback callback, Object state, String name = "")
         {
+            if(IsStop)
+            {
+                return;
+            }
+
             var item = new WorkItem { Callback = callback, State = state };
             if (string.IsNullOrEmpty(name))
             {
@@ -70,8 +75,30 @@ namespace ThreadPool
 
         }
 
-        public void Stop()
+        public void Close()
         {
+            IsStop = true;
+
+            IThread t;
+            bool hasThread = true;
+            while (hasThread)
+            {
+                hasThread = _threads.TryPop(out t);
+
+                if(hasThread)
+                {
+                    t.Stop();
+                }
+            }
+            _threads.Clear();
+            _threads = null;
+
+            IWorkItem item;
+            while (_queue.TryDequeue(out item))
+            {
+                //just drop it
+            }
+            _queue = null;
         }
 
         public override string ToString()
@@ -81,7 +108,7 @@ namespace ThreadPool
 
         private void AddThread_IfNecessary()
         {
-            if (_queue.Count > _threads.Count)
+            if (_queue.Count > _threads.Count && _threads.Count < _info.MaxWorkerThreads)
             {
                 _threads.Push(NewThread());
             }
@@ -90,8 +117,14 @@ namespace ThreadPool
         private IThread NewThread()
         {
             IThread _thread = new WorkThread(_info.Timeout);
+            _thread.FinishItem += thread_FinishItem;
             _thread.Start();
             return _thread;
+        }
+
+        private void thread_FinishItem(object sender, ItemEventArgs e)
+        {
+            _threads.Push(sender as IThread);
         }
 
         private void FindIdleThread_DoWork()

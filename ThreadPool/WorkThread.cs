@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -75,7 +76,9 @@ namespace ThreadPool
             }
         }
 
-        public ThreadState State { get { return _thread.ThreadState; } }
+        public System.Threading.ThreadState State { get { return _thread.ThreadState; } }
+
+        public event FinishItemHandler FinishItem;
 
         public void Start()
         {
@@ -106,13 +109,26 @@ namespace ThreadPool
 
                 lock (_syncRoot)
                 {
-                    WorkItem.Callback.Invoke(WorkItem.State);
+                    try
+                    {
+                        WorkItem.Callback.Invoke(WorkItem.State);
+                        OnFinishItem(WorkItem.Result);
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine(ex.Format());
+                    }
                     _item = null;
                 }
             }
+        }
 
-            //TODO
-            //trigger exit event, remove it from thread pool
+        private void OnFinishItem(object result)
+        {
+            if (null != FinishItem)
+            {
+                FinishItem(this, new ItemEventArgs { Result = result });
+            }
         }
     }
 }

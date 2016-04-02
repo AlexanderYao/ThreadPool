@@ -13,6 +13,8 @@ namespace ThreadPool
 
         void WaitForAll();
 
+        void Close();
+
         string Name { get; }
 
         int QueueCount { get; }

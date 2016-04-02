@@ -12,5 +12,6 @@ namespace ThreadPool
         public String Name { get; set; }
         public WaitCallback Callback { get; set; }
         public Object State { get; set; }
+        public Object Result { get; set; }
     }
 }

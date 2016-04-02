@@ -12,13 +12,15 @@ namespace ThreadPool.Sample
     {
         static void Main(string[] args)
         {
-            StartInfo info = new StartInfo { Timeout = 2 };
+            StartInfo info = new StartInfo { Timeout = 60 };
             IThreadPool pool = new SingleThreadPool(info, "short term");
-            pool.QueueUserWorkItem(Print, "i'm item 1");
-            pool.QueueUserWorkItem(Print, "i'm item 2");
+            for (int i = 0; i < 20; i++)
+            {
+                pool.QueueUserWorkItem(Print, "i'm item " + i);
+                Thread.Sleep(500);
+                Console.WriteLine(pool);
+            }
             //pool.WaitForAll();
-            Thread.Sleep(2000);
-            Console.WriteLine(pool);
             Console.Read();
         }
 

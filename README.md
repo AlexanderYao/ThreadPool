@@ -2,11 +2,15 @@ ThreadPool
 ==========
 
 ### todo
+1. how to return result
 2. add queue strategy, including DropOldest + DropNewest
-3. add return result to work item
+3. how to implement WaitForAll
 
 ### done
-- 2016.03.20 single thread in pool
-- 2016.04.01 adjust thread dynamically, we don't have to use a seperate thread to manage the pool
-    - Adjust pool: add thread when new work item come in, do it on the caller thread; remove thread when it wait timeout, and exit by itself.
-    - Find idle thread to do a queued item: do it on the caller thread.
+2016.04.02 fix bug, push idle thread back into pool
+2016.04.01 adjust thread dynamically, we don't have to use a seperate thread to manage the pool
+
+- Caller Thread: enqueue work item, add thread if necessary, find idle thread dealing with item
+- Worker Thread: stop when it wait timeout, and exit by itself
+
+2016.03.20 single thread in pool
