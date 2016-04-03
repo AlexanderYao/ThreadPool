@@ -71,7 +71,7 @@ namespace ThreadPool
             };
             _count++;
             _queue.Enqueue(item);
-            //_event.Set();
+            _event.Set();
         }
 
         public void WaitForAll()
@@ -128,6 +128,7 @@ namespace ThreadPool
         private void thread_FinishItem(object sender, ItemEventArgs e)
         {
             _threads.Push(sender as IThread);
+            //_event.Set();
         }
 
         private void Loop()

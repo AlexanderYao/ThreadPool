@@ -115,6 +115,12 @@ namespace ThreadPool
 
                 try
                 {
+                    //in debug mode, _event can be set while _item is still null, why?
+                    if (null == _item)
+                    {
+                        continue;
+                    }
+
                     _item.Callback.Invoke(_item.State);
                     OnItemFinished(_item.Result);
                     _item = null;

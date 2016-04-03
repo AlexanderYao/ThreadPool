@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.ExceptionServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -12,9 +13,21 @@ namespace ThreadPool.Sample
     {
         static void Main(string[] args)
         {
+            //AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
+            //AppDomain.CurrentDomain.FirstChanceException += CurrentDomain_FirstChanceException;
             //TestWaitHandle();
             TestThreadPool();
             Console.Read();
+        }
+
+        static void CurrentDomain_FirstChanceException(object sender, FirstChanceExceptionEventArgs e)
+        {
+            Console.WriteLine(e.Exception);
+        }
+
+        static void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
+        {
+            Console.WriteLine(e.ExceptionObject);
         }
 
         private static void TestThreadPool()
@@ -52,6 +65,8 @@ namespace ThreadPool.Sample
                     Console.WriteLine("get it? {0}", getIt ? "yes" : "no");
                 }
             });
+            //连续触发的话，只有1个Set有用
+            e.Set();
             e.Set();
             Console.WriteLine("event set!");
             t.Start();
