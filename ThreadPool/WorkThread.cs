@@ -14,7 +14,6 @@ namespace ThreadPool
         private int _timeout;
         private Thread _thread;
         private bool _isStop;
-        private bool _isIdle;
         private AutoResetEvent _event;
         private IWorkItem _item;
         private object _syncRoot;
@@ -23,7 +22,6 @@ namespace ThreadPool
         {
             _timeout = timeout;
             _isStop = false;
-            _isIdle = false;
             _event = new AutoResetEvent(false);
             _syncRoot = new object();
 
@@ -67,10 +65,7 @@ namespace ThreadPool
                     throw new ArgumentNullException();
                 }
 
-                lock (_syncRoot)
-                {
-                    _item = value;
-                }
+                _item = value;
                 Name = value.Name;
                 _event.Set();
             }
@@ -78,7 +73,11 @@ namespace ThreadPool
 
         public System.Threading.ThreadState State { get { return _thread.ThreadState; } }
 
-        public event FinishItemHandler FinishItem;
+        public bool IsStop { get { return _isStop; } }
+
+        public event ItemFinishedHandler ItemFinished;
+
+        public event ExitedHandler Exited;
 
         public void Start()
         {
@@ -92,42 +91,56 @@ namespace ThreadPool
             _event.Set();
         }
 
+        public void Dispose()
+        {
+            _thread = null;
+            _event.Dispose();
+            _event = null;
+        }
+
         private void Loop()
         {
-            while (!_isStop && !_isIdle)
+            while (!_isStop)
             {
-                if (null == WorkItem)
+                if (null == _item)
                 {
                     bool getIt = _event.WaitOne(_timeout * 1000);
 
                     if (!getIt)
                     {
-                        _isIdle = true;
+                        _isStop = true;
                         continue;
                     }
                 }
 
-                lock (_syncRoot)
+                try
                 {
-                    try
-                    {
-                        WorkItem.Callback.Invoke(WorkItem.State);
-                        OnFinishItem(WorkItem.Result);
-                    }
-                    catch (Exception ex)
-                    {
-                        Debug.WriteLine(ex.Format());
-                    }
+                    _item.Callback.Invoke(_item.State);
+                    OnItemFinished(_item.Result);
                     _item = null;
                 }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.Format());
+                }
+            }
+
+            OnExited();
+        }
+
+        private void OnExited()
+        {
+            if (null != Exited)
+            {
+                Exited(this, EventArgs.Empty);
             }
         }
 
-        private void OnFinishItem(object result)
+        private void OnItemFinished(object result)
         {
-            if (null != FinishItem)
+            if (null != ItemFinished)
             {
-                FinishItem(this, new ItemEventArgs { Result = result });
+                ItemFinished(this, new ItemEventArgs { Result = result });
             }
         }
     }

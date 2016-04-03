@@ -12,24 +12,35 @@ namespace ThreadPool
 {
     public class SingleThreadPool : IThreadPool
     {
+        private Thread _mainThread;
         private ConcurrentStack<IThread> _threads;
         private StartInfo _info;
         private ConcurrentQueue<IWorkItem> _queue;
         private Int32 _count;
+        private Int32 _threadCount;
+        private bool _isStop;
+        private AutoResetEvent _event;
 
         public SingleThreadPool() : this(null, string.Empty) { }
 
         public SingleThreadPool(StartInfo info, string name)
         {
+            _isStop = false;
             _info = info ?? new StartInfo();
             _queue = new ConcurrentQueue<IWorkItem>();
             _threads = new ConcurrentStack<IThread>();
+            _event = new AutoResetEvent(false);
             this.Name = name;
 
             for (int i = 0; i < _info.MinWorkerThreads; i++)
             {
                 _threads.Push(NewThread());
             }
+
+            _mainThread = new Thread(Loop);
+            _mainThread.Name = string.IsNullOrEmpty(name) ? "Single Thread Pool" : name;
+            _mainThread.IsBackground = true;
+            _mainThread.Start();
         }
 
         public string Name { get; private set; }
@@ -41,33 +52,26 @@ namespace ThreadPool
 
         public int ThreadCount
         {
-            get { return _threads.Count; }
+            get { return _threadCount; }
+            set { _threadCount = value; }
         }
-
-        public bool IsStop { get; set; }
 
         public void QueueUserWorkItem(WaitCallback callback, Object state, String name = "")
         {
-            if(IsStop)
+            if (_isStop)
             {
                 return;
             }
 
-            var item = new WorkItem { Callback = callback, State = state };
-            if (string.IsNullOrEmpty(name))
+            var item = new WorkItem
             {
-                item.Name = string.Format("item {0}", _count);
-            }
-            else
-            {
-                item.Name = name;
-            }
-
+                Callback = callback,
+                State = state,
+                Name = string.IsNullOrEmpty(name) ? ("item " + _count) : name,
+            };
             _count++;
             _queue.Enqueue(item);
-
-            AddThread_IfNecessary();
-            FindIdleThread_DoWork();
+            //_event.Set();
         }
 
         public void WaitForAll()
@@ -77,7 +81,7 @@ namespace ThreadPool
 
         public void Close()
         {
-            IsStop = true;
+            _isStop = true;
 
             IThread t;
             bool hasThread = true;
@@ -85,7 +89,7 @@ namespace ThreadPool
             {
                 hasThread = _threads.TryPop(out t);
 
-                if(hasThread)
+                if (hasThread)
                 {
                     t.Stop();
                 }
@@ -106,20 +110,19 @@ namespace ThreadPool
             return string.Format("ThreadPool = {0}, QueueCount = {1}, ThreadCount = {2}", Name, QueueCount, ThreadCount);
         }
 
-        private void AddThread_IfNecessary()
-        {
-            if (_queue.Count > _threads.Count && _threads.Count < _info.MaxWorkerThreads)
-            {
-                _threads.Push(NewThread());
-            }
-        }
-
         private IThread NewThread()
         {
             IThread _thread = new WorkThread(_info.Timeout);
-            _thread.FinishItem += thread_FinishItem;
+            _thread.ItemFinished += thread_FinishItem;
+            _thread.Exited += thread_Exited;
             _thread.Start();
+            _threadCount++;
             return _thread;
+        }
+
+        private void thread_Exited(object sender, EventArgs e)
+        {
+            _threadCount--;
         }
 
         private void thread_FinishItem(object sender, ItemEventArgs e)
@@ -127,23 +130,69 @@ namespace ThreadPool
             _threads.Push(sender as IThread);
         }
 
-        private void FindIdleThread_DoWork()
+        private void Loop()
         {
-            IThread t;
-            bool hasThread = _threads.TryPop(out t);
-
-            if (!hasThread)
+            while (true)
             {
-                throw new Exception("find no idle thread");
+                Console.WriteLine(this);
+                //adjust pool every 1 sec
+                _event.WaitOne(1000 * _info.AdjustInterval);
+
+                if (_queue.Count == 0)
+                {
+                    continue;
+                }
+
+                IThread t = TryGetThread();
+
+                if (null == t)
+                {
+                    continue;
+                }
+
+                IWorkItem workItem;
+                bool hasItem = _queue.TryDequeue(out workItem);
+
+                if (!hasItem)
+                {
+                    continue;
+                }
+
+                Console.WriteLine("assign {0} to thread {1}", workItem.Name, t.Id);
+                t.WorkItem = workItem;
             }
+        }
 
-            IWorkItem item;
-            bool hasItem = _queue.TryDequeue(out item);
+        private IThread TryGetThread()
+        {
+            IThread t = null;
 
-            if (hasItem)
+            while (true)
             {
-                t.WorkItem = item;
+                bool hasThread = _threads.TryPop(out t);
+
+                if (!hasThread)
+                {
+                    if (_threadCount < _info.MaxWorkerThreads)
+                    {
+                        t = NewThread();
+                    }
+                    break;
+                }
+                else if (hasThread)
+                {
+                    if (t.IsStop)
+                    {
+                        t.Dispose();
+                        continue;
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
             }
+            return t;
         }
     }
 }

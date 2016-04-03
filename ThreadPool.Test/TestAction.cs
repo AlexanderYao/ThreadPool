@@ -1,29 +1,35 @@
 ﻿using System;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.Threading;
+using System.Diagnostics;
 
 namespace ThreadPool.Test
 {
     [TestClass]
     public class TestAction
     {
-        private static IThreadPool _pool;
+        private IThreadPool _pool;
 
-        [ClassInitialize]
-        public static void Init(TestContext context)
+        public TestAction()
         {
-            _pool = new SingleThreadPool();
-        }
-
-        [ClassCleanup]
-        public static void End()
-        {
-            //_pool.Shutdown();
+            StartInfo info = new StartInfo { Timeout = 5 };
+            _pool = new SingleThreadPool(info, "short term");
         }
 
         [TestMethod]
-        public void Action0()
+        public void TestTimeout_ExitByItself()
         {
-            _pool.QueueUserWorkItem(Print, "hello world!");
+            for (int i = 0; i < 5; i++)
+            {
+                _pool.QueueUserWorkItem(Print, "i'm item " + i);
+                Thread.Sleep(1000);
+            }
+
+            Thread.Sleep(1000);
+            Assert.AreEqual(_pool.ThreadCount, 1);
+
+            Thread.Sleep(5000);
+            Assert.AreEqual(_pool.ThreadCount, 0);
         }
 
         private void Print(Object o)

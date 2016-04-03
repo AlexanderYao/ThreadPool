@@ -7,20 +7,26 @@ using System.Threading.Tasks;
 
 namespace ThreadPool
 {
-    public delegate void FinishItemHandler(object sender, ItemEventArgs e);
-    public interface IThread
+    public interface IThread : IDisposable
     {
         int Id { get; }
         string Name { get; }
         DateTime StartTime { get; }
         IWorkItem WorkItem { get; set; }
         ThreadState State { get; }
+        bool IsStop { get; }
 
-        event FinishItemHandler FinishItem;
+        event ItemFinishedHandler ItemFinished;
+        event ExitedHandler Exited;
 
         void Start();
         void Stop();
     }
+
+    public delegate void ItemFinishedHandler(object sender, ItemEventArgs e);
+    
+    public delegate void ExitedHandler(object sender, EventArgs e);
+
     public class ItemEventArgs
     {
         public Object Result { get; set; }

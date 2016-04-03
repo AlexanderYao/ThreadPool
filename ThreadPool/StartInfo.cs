@@ -27,6 +27,10 @@ namespace ThreadPool
         /// default: timeout = 60s, based on second
         /// </summary>
         public Int32 Timeout { get; set; }
+        /// <summary>
+        /// default: interval = 1s, based on second
+        /// </summary>
+        public Int32 AdjustInterval { get; set; }
 
         public StartInfo()
         {
@@ -34,6 +38,7 @@ namespace ThreadPool
             MaxWorkerThreads = 10;
             DropEnum = DropEnum.DropNewest;
             Timeout = 60;
+            AdjustInterval = 1;
         }
     }
 
