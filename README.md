@@ -5,6 +5,7 @@ ThreadPool
 1. how to return result
 2. add queue strategy, including DropOldest + DropNewest
 3. how to implement WaitForAll
+4. in debug mode, WaitHandle(in workThread) is set unexpected, why?
 
 ### done
 2016.04.02 fix bug, push idle thread back into pool

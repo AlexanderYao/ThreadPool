@@ -18,6 +18,7 @@ namespace ThreadPool
         private ConcurrentQueue<IWorkItem> _queue;
         private Int32 _count;
         private Int32 _threadCount;
+        private Int32 _maxThreadCount;
         private bool _isStop;
         private AutoResetEvent _event;
 
@@ -34,7 +35,7 @@ namespace ThreadPool
 
             for (int i = 0; i < _info.MinWorkerThreads; i++)
             {
-                _threads.Push(NewThread());
+                _threads.Push(NewThread(true));
             }
 
             _mainThread = new Thread(Loop);
@@ -53,7 +54,11 @@ namespace ThreadPool
         public int ThreadCount
         {
             get { return _threadCount; }
-            set { _threadCount = value; }
+        }
+
+        public int MaxThreadCount
+        {
+            get { return _maxThreadCount; }
         }
 
         public void QueueUserWorkItem(WaitCallback callback, Object state, String name = "")
@@ -110,13 +115,15 @@ namespace ThreadPool
             return string.Format("ThreadPool = {0}, QueueCount = {1}, ThreadCount = {2}", Name, QueueCount, ThreadCount);
         }
 
-        private IThread NewThread()
+        private IThread NewThread(bool isMin = false)
         {
             IThread _thread = new WorkThread(_info.Timeout);
             _thread.ItemFinished += thread_FinishItem;
             _thread.Exited += thread_Exited;
+            _thread.IsMin = isMin;
             _thread.Start();
             _threadCount++;
+            _maxThreadCount = Math.Max(_maxThreadCount, _threadCount);
             return _thread;
         }
 
@@ -144,28 +151,40 @@ namespace ThreadPool
                     continue;
                 }
 
-                IThread t = TryGetThread();
+                List<IThread> threads = TryGetThread();
 
-                if (null == t)
+                if (null == threads || threads.Count == 0)
                 {
                     continue;
                 }
 
-                IWorkItem workItem;
-                bool hasItem = _queue.TryDequeue(out workItem);
-
-                if (!hasItem)
+                int i = 0;
+                for (; i < threads.Count; i++)
                 {
-                    continue;
+                    IWorkItem workItem;
+                    bool hasItem = _queue.TryDequeue(out workItem);
+
+                    if (!hasItem)
+                    {
+                        //we break even if following thread can get item, to keep stack order
+                        break;
+                    }
+
+                    Console.WriteLine("assign {0} to thread {1}", workItem.Name, threads[i].Id);
+                    threads[i].WorkItem = workItem;
                 }
 
-                Console.WriteLine("assign {0} to thread {1}", workItem.Name, t.Id);
-                t.WorkItem = workItem;
+                //push from back end, keep the stack order
+                for (int j = threads.Count - 1; j >= i; j--)
+                {
+                    _threads.Push(threads[j]);
+                }
             }
         }
 
-        private IThread TryGetThread()
+        private List<IThread> TryGetThread()
         {
+            List<IThread> result = new List<IThread>();
             IThread t = null;
 
             while (true)
@@ -174,13 +193,14 @@ namespace ThreadPool
 
                 if (!hasThread)
                 {
-                    if (_threadCount < _info.MaxWorkerThreads)
+                    if (_threadCount < _info.MaxWorkerThreads &&
+                        result.Count < _queue.Count)
                     {
-                        t = NewThread();
+                        result.Add(NewThread());
                     }
                     break;
                 }
-                else if (hasThread)
+                else// if (hasThread)
                 {
                     if (t.IsStop)
                     {
@@ -189,11 +209,11 @@ namespace ThreadPool
                     }
                     else
                     {
-                        break;
+                        result.Add(t);
                     }
                 }
             }
-            return t;
+            return result;
         }
     }
 }

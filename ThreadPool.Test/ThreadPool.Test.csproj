@@ -50,8 +50,9 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
-    <Compile Include="TestAction.cs" />
+    <Compile Include="TestShortTerm.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="TestLongTerm.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\ThreadPool\ThreadPool.csproj">

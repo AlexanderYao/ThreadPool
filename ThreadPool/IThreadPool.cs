@@ -20,5 +20,7 @@ namespace ThreadPool
         int QueueCount { get; }
 
         int ThreadCount { get; }
+
+        int MaxThreadCount { get; }
     }
 }

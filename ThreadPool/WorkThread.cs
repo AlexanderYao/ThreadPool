@@ -75,6 +75,8 @@ namespace ThreadPool
 
         public bool IsStop { get { return _isStop; } }
 
+        public bool IsMin { get; set; }
+
         public event ItemFinishedHandler ItemFinished;
 
         public event ExitedHandler Exited;
@@ -106,7 +108,8 @@ namespace ThreadPool
                 {
                     bool getIt = _event.WaitOne(_timeout * 1000);
 
-                    if (!getIt)
+                    //min thread will never exit
+                    if (!getIt && !IsMin)
                     {
                         _isStop = true;
                         continue;

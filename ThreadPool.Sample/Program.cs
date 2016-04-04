@@ -32,14 +32,9 @@ namespace ThreadPool.Sample
 
         private static void TestThreadPool()
         {
-            StartInfo info = new StartInfo
-            {
-                Timeout = 5,
-                MinWorkerThreads = 1,
-                MaxWorkerThreads = 5,
-            };
+            StartInfo info = new StartInfo { Timeout = 1, MinWorkerThreads = 1 };
             IThreadPool pool = new SingleThreadPool(info, "long term pool");
-            for (int i = 0; i < 10; i++)
+            for (int i = 0; i < 5; i++)
             {
                 pool.QueueUserWorkItem(Print, "i'm item " + i);
             }
@@ -48,7 +43,7 @@ namespace ThreadPool.Sample
 
         static void Print(Object o)
         {
-            Thread.Sleep(1000);
+            //Thread.Sleep(1000);
             Console.WriteLine(o as String);
         }
 

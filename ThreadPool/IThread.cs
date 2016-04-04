@@ -15,6 +15,8 @@ namespace ThreadPool
         IWorkItem WorkItem { get; set; }
         ThreadState State { get; }
         bool IsStop { get; }
+        //是否线程池必须运行的最小线程
+        bool IsMin { get; set; }
 
         event ItemFinishedHandler ItemFinished;
         event ExitedHandler Exited;
