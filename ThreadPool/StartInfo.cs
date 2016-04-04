@@ -20,7 +20,7 @@ namespace ThreadPool
         /// </summary>
         public Int32 MaxWorkerThreads { get; set; }
         /// <summary>
-        /// default: drop = never
+        /// default: drop = never, MaxQueue has no effect when drop = never
         /// </summary>
         public DropEnum DropEnum { get; set; }
         /// <summary>

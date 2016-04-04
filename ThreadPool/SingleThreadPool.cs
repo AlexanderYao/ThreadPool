@@ -26,6 +26,7 @@ namespace ThreadPool
 
         public SingleThreadPool(StartInfo info, string name)
         {
+            CheckStartInfo(info);
             _isStop = false;
             _info = info ?? new StartInfo();
             _queue = new ConcurrentQueue<IWorkItem>();
@@ -45,6 +46,41 @@ namespace ThreadPool
         }
 
         public string Name { get; private set; }
+
+        public StartInfo StartInfo
+        {
+            get { return _info; }
+            set
+            {
+                CheckStartInfo(value);
+
+                if (value.MinWorkerThreads != _info.MinWorkerThreads)
+                {
+                    throw new ArgumentException("Min can not change");
+                }
+
+                _info = value;
+            }
+        }
+
+        private void CheckStartInfo(StartInfo value)
+        {
+            if (null == value)
+            {
+                throw new ArgumentNullException("StartInfo");
+            }
+
+            if (value.MinWorkerThreads <= 0 || value.MaxWorkerThreads <= 0 ||
+                value.AdjustInterval <= 0 || value.MaxQueueCount <= 0 || value.Timeout <= 0)
+            {
+                throw new ArgumentException("Min|Max|Adjust|Queue|Timeout should <= 0");
+            }
+
+            if (value.MinWorkerThreads > value.MaxWorkerThreads)
+            {
+                throw new ArgumentException("Min > Max");
+            }
+        }
 
         public int QueueCount
         {
@@ -76,33 +112,7 @@ namespace ThreadPool
             };
             _count++;
 
-            if (_queue.Count <= _info.MaxQueueCount)
-            {
-                _queue.Enqueue(item);
-                _event.Set();
-            }
-            else
-            {
-                switch (_info.DropEnum)
-                {
-                    case DropEnum.Never:
-                        _queue.Enqueue(item);
-                        _event.Set();
-                        break;
-                    case DropEnum.DropNewest:
-                        //do nothing, just drop it
-                        break;
-                    case DropEnum.DropOldest:
-                        IWorkItem dropItem;
-                        bool removeFirst = _queue.TryDequeue(out dropItem);
-                        //Assert.IsTrue(removeFirst);
-                        _queue.Enqueue(item);
-                        _event.Set();
-                        break;
-                    default:
-                        throw new ArgumentOutOfRangeException("DropEnum");
-                }
-            }
+            EnqueueOrDrop(item);
         }
 
         public void WaitForAll()
@@ -139,6 +149,42 @@ namespace ThreadPool
         public override string ToString()
         {
             return string.Format("ThreadPool = {0}, QueueCount = {1}, ThreadCount = {2}", Name, QueueCount, ThreadCount);
+        }
+
+        private void EnqueueOrDrop(WorkItem item)
+        {
+            if (_queue.Count < _info.MaxQueueCount)
+            {
+                _queue.Enqueue(item);
+                Debug.WriteLine("{0} enqueue", new object[] { item.Name });
+                _event.Set();
+            }
+            else
+            {
+                switch (_info.DropEnum)
+                {
+                    case DropEnum.Never:
+                        _queue.Enqueue(item);
+                        Debug.WriteLine("{0} enqueue", new object[] { item.Name });
+                        _event.Set();
+                        break;
+                    case DropEnum.DropNewest:
+                        //do nothing, just drop it
+                        Debug.WriteLine("{0} dropped", new object[] { item.Name });
+                        break;
+                    case DropEnum.DropOldest:
+                        IWorkItem dropItem;
+                        bool removeFirst = _queue.TryDequeue(out dropItem);
+                        Debug.WriteLine("{0} dropped", new object[] { dropItem.Name });
+                        //Assert.IsTrue(removeFirst);
+                        _queue.Enqueue(item);
+                        Debug.WriteLine("{0} enqueue", new object[] { item.Name });
+                        _event.Set();
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException("DropEnum");
+                }
+            }
         }
 
         private IThread NewThread(bool isMin = false)

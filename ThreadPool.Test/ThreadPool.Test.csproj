@@ -50,6 +50,7 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
+    <Compile Include="TestQueueStrategy.cs" />
     <Compile Include="TestShortTerm.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TestLongTerm.cs" />

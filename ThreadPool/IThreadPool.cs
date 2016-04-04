@@ -17,6 +17,8 @@ namespace ThreadPool
 
         string Name { get; }
 
+        StartInfo StartInfo { get; set; }
+
         int QueueCount { get; }
 
         int ThreadCount { get; }
