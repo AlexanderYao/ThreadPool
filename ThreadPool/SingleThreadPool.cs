@@ -130,6 +130,15 @@ namespace ThreadPool
         private void thread_Exited(object sender, EventArgs e)
         {
             _threadCount--;
+
+            IThread t = sender as IThread;
+            if (null != t.WorkItem)
+            {
+                Console.WriteLine("push {0} back into queue", t.WorkItem.Name);
+                _queue.Enqueue(t.WorkItem);
+            }
+
+            Console.WriteLine("thread {0} has exited", t.Id);
         }
 
         private void thread_FinishItem(object sender, ItemEventArgs e)

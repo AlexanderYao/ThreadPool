@@ -15,19 +15,10 @@ namespace ThreadPool.Sample
         {
             //AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
             //AppDomain.CurrentDomain.FirstChanceException += CurrentDomain_FirstChanceException;
+            
             //TestWaitHandle();
             TestThreadPool();
             Console.Read();
-        }
-
-        static void CurrentDomain_FirstChanceException(object sender, FirstChanceExceptionEventArgs e)
-        {
-            Console.WriteLine(e.Exception);
-        }
-
-        static void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
-        {
-            Console.WriteLine(e.ExceptionObject);
         }
 
         private static void TestThreadPool()
@@ -65,6 +56,16 @@ namespace ThreadPool.Sample
             e.Set();
             Console.WriteLine("event set!");
             t.Start();
+        }
+
+        static void CurrentDomain_FirstChanceException(object sender, FirstChanceExceptionEventArgs e)
+        {
+            Console.WriteLine(e.Exception);
+        }
+
+        static void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
+        {
+            Console.WriteLine(e.ExceptionObject);
         }
     }
 }
