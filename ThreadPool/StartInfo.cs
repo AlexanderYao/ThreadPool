@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace ThreadPool
 {
     /// <summary>
-    /// default：min = 2, max = 10, drop = never, timeout = 60s
+    /// we should adjust these parameters by using scenario, such as long term or short term
     /// </summary>
     public class StartInfo
     {
@@ -31,6 +31,10 @@ namespace ThreadPool
         /// default: interval = 1s, based on second
         /// </summary>
         public Int32 AdjustInterval { get; set; }
+        /// <summary>
+        /// default: queue = 1000
+        /// </summary>
+        public Int32 MaxQueueCount { get; set; }
 
         public StartInfo()
         {
@@ -39,6 +43,7 @@ namespace ThreadPool
             DropEnum = DropEnum.DropNewest;
             Timeout = 60;
             AdjustInterval = 1;
+            MaxQueueCount = 1000;
         }
     }
 

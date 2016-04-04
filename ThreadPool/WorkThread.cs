@@ -17,6 +17,7 @@ namespace ThreadPool
         private AutoResetEvent _event;
         private IWorkItem _item;
         private object _syncRoot;
+        private string _name;
 
         public WorkThread(int timeout)
         {
@@ -28,20 +29,24 @@ namespace ThreadPool
             _thread = new Thread(Loop);
             _thread.IsBackground = true;
             _thread.SetApartmentState(ApartmentState.MTA);
+
+            this.Id = _thread.ManagedThreadId;
         }
 
         public int Id
         {
-            get { return _thread.ManagedThreadId; }
+            get;
+            private set;
         }
 
         public string Name
         {
-            get { return _thread.Name; }
+            get { return _name; }
             private set
             {
                 lock (_thread)
                 {
+                    _name = value;
                     typeof(Thread).GetField("m_Name", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(_thread, value);
                     var threadHandle = typeof(Thread).GetMethod("GetNativeHandle", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(_thread, null);
                     typeof(Thread).GetMethod("InformThreadNameChange", BindingFlags.NonPublic | BindingFlags.Static).Invoke(_thread, new object[] { threadHandle, value, (null == value) ? value.Length : 0 });
@@ -71,7 +76,13 @@ namespace ThreadPool
             }
         }
 
-        public System.Threading.ThreadState State { get { return _thread.ThreadState; } }
+        public System.Threading.ThreadState State
+        {
+            get
+            {
+                return null == _thread ? System.Threading.ThreadState.Stopped : _thread.ThreadState;
+            }
+        }
 
         public bool IsStop { get { return _isStop; } }
 
@@ -130,7 +141,7 @@ namespace ThreadPool
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine(ex.Format());
+                    Debug.WriteLine(ex.Format());
                 }
             }
 

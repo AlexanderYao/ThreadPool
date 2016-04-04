@@ -1,6 +1,7 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -63,7 +64,7 @@ namespace ThreadPool.Test
         private void Print(Object o)
         {
             Thread.Sleep(1000);
-            Console.WriteLine(o as String);
+            Debug.WriteLine(o as String);
         }
     }
 }

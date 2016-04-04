@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.ExceptionServices;
 using System.Text;
@@ -35,7 +36,7 @@ namespace ThreadPool.Sample
         static void Print(Object o)
         {
             //Thread.Sleep(1000);
-            Console.WriteLine(o as String);
+            Debug.WriteLine(o as String);
         }
 
         private static void TestWaitHandle()
@@ -43,29 +44,29 @@ namespace ThreadPool.Sample
             AutoResetEvent e = new AutoResetEvent(false);
             Thread t = new Thread(() =>
             {
-                Console.WriteLine("waiting for event...");
+                Debug.WriteLine("waiting for event...");
                 bool getIt;
                 for (int i = 0; i < 10; i++)
                 {
                     getIt = e.WaitOne(1000);
-                    Console.WriteLine("get it? {0}", getIt ? "yes" : "no");
+                    Debug.WriteLine("get it? {0}", getIt ? "yes" : "no");
                 }
             });
             //连续触发的话，只有1个Set有用
             e.Set();
             e.Set();
-            Console.WriteLine("event set!");
+            Debug.WriteLine("event set!");
             t.Start();
         }
 
         static void CurrentDomain_FirstChanceException(object sender, FirstChanceExceptionEventArgs e)
         {
-            Console.WriteLine(e.Exception);
+            Debug.WriteLine(e.Exception);
         }
 
         static void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
         {
-            Console.WriteLine(e.ExceptionObject);
+            Debug.WriteLine(e.ExceptionObject);
         }
     }
 }

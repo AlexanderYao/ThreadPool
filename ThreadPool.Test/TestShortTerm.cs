@@ -46,7 +46,7 @@ namespace ThreadPool.Test
 
         private void Print(Object o)
         {
-            Console.WriteLine(o as String);
+            Debug.WriteLine(o as String);
         }
     }
 }

@@ -75,8 +75,34 @@ namespace ThreadPool
                 Name = string.IsNullOrEmpty(name) ? ("item " + _count) : name,
             };
             _count++;
-            _queue.Enqueue(item);
-            _event.Set();
+
+            if (_queue.Count <= _info.MaxQueueCount)
+            {
+                _queue.Enqueue(item);
+                _event.Set();
+            }
+            else
+            {
+                switch (_info.DropEnum)
+                {
+                    case DropEnum.Never:
+                        _queue.Enqueue(item);
+                        _event.Set();
+                        break;
+                    case DropEnum.DropNewest:
+                        //do nothing, just drop it
+                        break;
+                    case DropEnum.DropOldest:
+                        IWorkItem dropItem;
+                        bool removeFirst = _queue.TryDequeue(out dropItem);
+                        //Assert.IsTrue(removeFirst);
+                        _queue.Enqueue(item);
+                        _event.Set();
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException("DropEnum");
+                }
+            }
         }
 
         public void WaitForAll()
@@ -134,11 +160,11 @@ namespace ThreadPool
             IThread t = sender as IThread;
             if (null != t.WorkItem)
             {
-                Console.WriteLine("push {0} back into queue", t.WorkItem.Name);
+                Debug.WriteLine("push {0} back into queue", new object[] { t.WorkItem.Name });
                 _queue.Enqueue(t.WorkItem);
             }
 
-            Console.WriteLine("thread {0} has exited", t.Id);
+            Debug.WriteLine("thread {0} has exited", t.Id);
         }
 
         private void thread_FinishItem(object sender, ItemEventArgs e)
@@ -151,7 +177,7 @@ namespace ThreadPool
         {
             while (true)
             {
-                Console.WriteLine(this);
+                Debug.WriteLine(this);
                 //adjust pool every 1 sec
                 _event.WaitOne(1000 * _info.AdjustInterval);
 
@@ -171,7 +197,7 @@ namespace ThreadPool
                 for (; i < threads.Count; i++)
                 {
                     IWorkItem workItem;
-                    bool hasItem = _queue.TryDequeue(out workItem);
+                    bool hasItem = _queue.TryPeek(out workItem);
 
                     if (!hasItem)
                     {
@@ -179,8 +205,18 @@ namespace ThreadPool
                         break;
                     }
 
-                    Console.WriteLine("assign {0} to thread {1}", workItem.Name, threads[i].Id);
-                    threads[i].WorkItem = workItem;
+                    IThread t = threads[i];
+                    if (t.IsStop)
+                    {
+                        t.Dispose();
+                        continue;
+                    }
+                    else
+                    {
+                        _queue.TryDequeue(out workItem);
+                        Debug.WriteLine("assign {0} to thread {1}", workItem.Name, threads[i].Id);
+                        threads[i].WorkItem = workItem;
+                    }
                 }
 
                 //push from back end, keep the stack order
