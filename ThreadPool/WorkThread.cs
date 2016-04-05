@@ -129,6 +129,7 @@ namespace ThreadPool
                     }
                 }
 
+                IWorkResult result = new WorkResult();
                 try
                 {
                     //in debug mode, _event can be set while _item is still null, why?
@@ -137,18 +138,18 @@ namespace ThreadPool
                         continue;
                     }
 
-                    _item.Result = _item.Callback.Invoke(_item.State);
-                    OnItemFinished(_item.Result);
-                    _item = null;
+                    result.Result = _item.Callback.Invoke(_item.State);
                 }
                 catch (Exception ex)
                 {
-                    if (null != _item)
-                    {
-                        _item.Exception = ex;
-                    }
-
+                    result.Exception = ex;
                     Debug.WriteLine(ex.Format());
+                }
+                finally
+                {
+                    _item.Result = result;
+                    OnItemFinished();
+                    _item = null;
                 }
             }
 
@@ -163,7 +164,7 @@ namespace ThreadPool
             }
         }
 
-        private void OnItemFinished(object result)
+        private void OnItemFinished()
         {
             if (null != ItemFinished)
             {

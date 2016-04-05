@@ -34,8 +34,7 @@ namespace ThreadPool.Test
                 list.Add(i);
             }
             IWorkItem item = _pool.QueueUserWorkItem(Avg, list);
-            Thread.Sleep(3);
-            Assert.AreEqual(5000, item.Result);
+            Assert.AreEqual(5000, item.GetResult().Result);
         }
 
         private Object Avg(Object o)

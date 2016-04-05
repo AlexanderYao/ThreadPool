@@ -8,7 +8,9 @@ namespace ThreadPool
         WorkItemCallback Callback { get; }
         string Name { get; }
         object State { get; }
-        object Result { get; set; }
-        Exception Exception { get; set; }
+        //TODO: should not expose set, just use GetResult()
+        IWorkResult Result { set; }
+
+        IWorkResult GetResult();
     }
 }
