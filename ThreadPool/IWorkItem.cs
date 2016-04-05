@@ -5,9 +5,10 @@ namespace ThreadPool
 {
     public interface IWorkItem
     {
-        WaitCallback Callback { get; set; }
-        string Name { get; set; }
-        object State { get; set; }
+        WorkItemCallback Callback { get; }
+        string Name { get; }
+        object State { get; }
         object Result { get; set; }
+        Exception Exception { get; set; }
     }
 }

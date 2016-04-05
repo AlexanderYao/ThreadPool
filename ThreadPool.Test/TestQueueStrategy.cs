@@ -20,7 +20,7 @@ namespace ThreadPool.Test
                 MaxWorkerThreads = 1,
                 MaxQueueCount = 3
             };
-            _pool = new SingleThreadPool(_info, "pool - limited queue");
+            _pool = ThreadPoolFactory.Create(_info, "pool - limited queue");
         }
 
         [TestMethod]
@@ -62,9 +62,10 @@ namespace ThreadPool.Test
             Assert.IsTrue(_pool.QueueCount <= _info.MaxQueueCount);
         }
 
-        private void Print(Object o)
+        private Object Print(Object o)
         {
             Debug.WriteLine(o as String);
+            return null;
         }
     }
 }

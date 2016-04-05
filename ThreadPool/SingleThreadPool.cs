@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace ThreadPool
 {
-    public class SingleThreadPool : IThreadPool
+    internal class SingleThreadPool : IThreadPool
     {
         private Thread _mainThread;
         private ConcurrentStack<IThread> _threads;
@@ -97,14 +97,14 @@ namespace ThreadPool
             get { return _maxThreadCount; }
         }
 
-        public void QueueUserWorkItem(WaitCallback callback, Object state, String name = "")
+        public IWorkItem QueueUserWorkItem(WorkItemCallback callback, Object state, String name = "")
         {
             if (_isStop)
             {
-                return;
+                return null;
             }
 
-            var item = new WorkItem
+            IWorkItem item = new WorkItem
             {
                 Callback = callback,
                 State = state,
@@ -113,6 +113,7 @@ namespace ThreadPool
             _count++;
 
             EnqueueOrDrop(item);
+            return item;
         }
 
         public void WaitForAll()
@@ -151,7 +152,7 @@ namespace ThreadPool
             return string.Format("ThreadPool = {0}, QueueCount = {1}, ThreadCount = {2}", Name, QueueCount, ThreadCount);
         }
 
-        private void EnqueueOrDrop(WorkItem item)
+        private void EnqueueOrDrop(IWorkItem item)
         {
             if (_queue.Count < _info.MaxQueueCount)
             {
@@ -189,10 +190,9 @@ namespace ThreadPool
 
         private IThread NewThread(bool isMin = false)
         {
-            IThread _thread = new WorkThread(_info.Timeout);
+            IThread _thread = new WorkThread(_info.Timeout, isMin);
             _thread.ItemFinished += thread_FinishItem;
             _thread.Exited += thread_Exited;
-            _thread.IsMin = isMin;
             _thread.Start();
             _threadCount++;
             _maxThreadCount = Math.Max(_maxThreadCount, _threadCount);
@@ -213,7 +213,7 @@ namespace ThreadPool
             Debug.WriteLine("thread {0} has exited", t.Id);
         }
 
-        private void thread_FinishItem(object sender, ItemEventArgs e)
+        private void thread_FinishItem(object sender, EventArgs e)
         {
             _threads.Push(sender as IThread);
             //_event.Set();

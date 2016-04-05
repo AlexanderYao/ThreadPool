@@ -22,7 +22,7 @@ namespace ThreadPool.Test
                 MinWorkerThreads = 1,
                 MaxWorkerThreads = 5,
             };
-            _pool = new SingleThreadPool(info, "long term pool");
+            _pool = ThreadPoolFactory.Create(info, "long term pool");
         }
 
         [TestMethod]
@@ -61,10 +61,11 @@ namespace ThreadPool.Test
             Assert.IsTrue(_pool.MaxThreadCount == 5);
         }
 
-        private void Print(Object o)
+        private Object Print(Object o)
         {
             Thread.Sleep(1000);
             Debug.WriteLine(o as String);
+            return null;
         }
     }
 }

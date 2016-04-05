@@ -14,29 +14,26 @@ namespace ThreadPool.Sample
     {
         static void Main(string[] args)
         {
-            //AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
-            //AppDomain.CurrentDomain.FirstChanceException += CurrentDomain_FirstChanceException;
-            
-            //TestWaitHandle();
-            TestThreadPool();
+            //TestMyThreadPool();
             Console.Read();
         }
 
-        private static void TestThreadPool()
+        private static void TestMyThreadPool()
         {
             StartInfo info = new StartInfo { Timeout = 1, MinWorkerThreads = 1 };
-            IThreadPool pool = new SingleThreadPool(info, "long term pool");
+            IThreadPool pool = ThreadPoolFactory.Create(info, "long term pool");
             for (int i = 0; i < 5; i++)
             {
-                pool.QueueUserWorkItem(Print, "i'm item " + i);
+                pool.QueueUserWorkItem(Print, "i'm item " + i, "test");
             }
             pool.WaitForAll();
         }
 
-        static void Print(Object o)
+        static Object Print(Object o)
         {
             //Thread.Sleep(1000);
             Debug.WriteLine(o as String);
+            return null;
         }
 
         private static void TestWaitHandle()
@@ -57,16 +54,6 @@ namespace ThreadPool.Sample
             e.Set();
             Debug.WriteLine("event set!");
             t.Start();
-        }
-
-        static void CurrentDomain_FirstChanceException(object sender, FirstChanceExceptionEventArgs e)
-        {
-            Debug.WriteLine(e.Exception);
-        }
-
-        static void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
-        {
-            Debug.WriteLine(e.ExceptionObject);
         }
     }
 }

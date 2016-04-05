@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 
 namespace ThreadPool
 {
-    public static class Util
+    internal static class Util
     {
-        public static string Format(this Exception ex)
+        internal static string Format(this Exception ex)
         {
             StringBuilder sb = new StringBuilder();
             sb.AppendLine(string.Format("message:{0}", ex.Message));

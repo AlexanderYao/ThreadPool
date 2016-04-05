@@ -2,11 +2,14 @@ ThreadPool
 ==========
 
 ### todo
-1. how to return result
+1. how to wait for result
+2. how to cancel
 3. how to implement WaitForAll
 4. in debug mode, WaitHandle(in workThread) is set unexpected, why?
 
 ### done
+2016.04.05 add return result
+
 2016.04.04 add queue strategy, including Never + DropOldest + DropNewest
 
 2016.04.03 fix bug, item may be assigned to thread who has then stopped // push the undone item back when thread exit

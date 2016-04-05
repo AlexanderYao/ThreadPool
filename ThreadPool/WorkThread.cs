@@ -9,9 +9,10 @@ using System.Threading.Tasks;
 
 namespace ThreadPool
 {
-    public class WorkThread : IThread
+    internal class WorkThread : IThread
     {
         private int _timeout;
+        private bool _isMin;
         private Thread _thread;
         private bool _isStop;
         private AutoResetEvent _event;
@@ -19,9 +20,10 @@ namespace ThreadPool
         private object _syncRoot;
         private string _name;
 
-        public WorkThread(int timeout)
+        public WorkThread(int timeout, bool isMin)
         {
             _timeout = timeout;
+            _isMin = isMin;
             _isStop = false;
             _event = new AutoResetEvent(false);
             _syncRoot = new object();
@@ -86,7 +88,7 @@ namespace ThreadPool
 
         public bool IsStop { get { return _isStop; } }
 
-        public bool IsMin { get; set; }
+        public bool IsMin { get { return _isMin; } }
 
         public event ItemFinishedHandler ItemFinished;
 
@@ -135,12 +137,17 @@ namespace ThreadPool
                         continue;
                     }
 
-                    _item.Callback.Invoke(_item.State);
+                    _item.Result = _item.Callback.Invoke(_item.State);
                     OnItemFinished(_item.Result);
                     _item = null;
                 }
                 catch (Exception ex)
                 {
+                    if (null != _item)
+                    {
+                        _item.Exception = ex;
+                    }
+
                     Debug.WriteLine(ex.Format());
                 }
             }
@@ -160,7 +167,7 @@ namespace ThreadPool
         {
             if (null != ItemFinished)
             {
-                ItemFinished(this, new ItemEventArgs { Result = result });
+                ItemFinished(this, EventArgs.Empty);
             }
         }
     }

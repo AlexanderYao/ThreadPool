@@ -1,9 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace ThreadPool
 {
@@ -16,7 +12,7 @@ namespace ThreadPool
         ThreadState State { get; }
         bool IsStop { get; }
         //是否线程池必须运行的最小线程
-        bool IsMin { get; set; }
+        bool IsMin { get; }
 
         event ItemFinishedHandler ItemFinished;
         event ExitedHandler Exited;
@@ -25,12 +21,7 @@ namespace ThreadPool
         void Stop();
     }
 
-    public delegate void ItemFinishedHandler(object sender, ItemEventArgs e);
+    public delegate void ItemFinishedHandler(object sender, EventArgs e);
     
     public delegate void ExitedHandler(object sender, EventArgs e);
-
-    public class ItemEventArgs
-    {
-        public Object Result { get; set; }
-    }
 }

@@ -13,7 +13,7 @@ namespace ThreadPool.Test
         public TestShortTerm()
         {
             StartInfo info = new StartInfo { Timeout = 1, MinWorkerThreads = 1 };
-            _pool = new SingleThreadPool(info, "short term pool");
+            _pool = ThreadPoolFactory.Create(info, "short term pool");
         }
 
         [TestMethod]
@@ -36,7 +36,7 @@ namespace ThreadPool.Test
                 _pool.QueueUserWorkItem(Print, "i'm item " + i);
             }
             Assert.IsTrue(_pool.QueueCount > _pool.ThreadCount);
-            
+
             _pool.WaitForAll();
             Thread.Sleep(3000);
 
@@ -44,9 +44,10 @@ namespace ThreadPool.Test
             Assert.AreEqual(1, _pool.ThreadCount);
         }
 
-        private void Print(Object o)
+        private Object Print(Object o)
         {
             Debug.WriteLine(o as String);
+            return null;
         }
     }
 }

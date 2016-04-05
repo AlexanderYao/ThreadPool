@@ -36,6 +36,7 @@
     <Compile Include="SingleThreadPool.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="StartInfo.cs" />
+    <Compile Include="ThreadPoolFactory.cs" />
     <Compile Include="Util.cs" />
     <Compile Include="WorkItem.cs" />
     <Compile Include="WorkThread.cs" />
