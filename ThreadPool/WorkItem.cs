@@ -16,6 +16,7 @@ namespace ThreadPool
         public String Name { get; set; }
         public WorkItemCallback Callback { get; set; }
         public Object State { get; set; }
+        public WaitHandle WaitHandle { get { return _event; } }
 
         public IWorkResult Result
         {
@@ -32,8 +33,18 @@ namespace ThreadPool
 
         public IWorkResult GetResult()
         {
-            _event.WaitOne();
+            return this.GetResult(-1);
+        }
+
+        public IWorkResult GetResult(int millisecondsTimeout)
+        {
+            _event.WaitOne(millisecondsTimeout);
             return _result;
+        }
+
+        public IWorkResult GetResult(TimeSpan timeout)
+        {
+            return this.GetResult((int)timeout.TotalMilliseconds);
         }
     }
 }

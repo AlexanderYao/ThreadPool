@@ -11,11 +11,13 @@ namespace ThreadPool
 
     public interface IThreadPool
     {
-        //void QueueUserWorkItem(WaitCallback callback, Object state, String name = "");
-
         IWorkItem QueueUserWorkItem(WorkItemCallback callback, Object state, String name = "");
 
-        void WaitForAll();
+        bool WaitAll();
+
+        bool WaitAll(int millisecondsTimeout);
+
+        bool WaitAll(TimeSpan timeout);
 
         void Close();
 

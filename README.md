@@ -2,12 +2,12 @@ ThreadPool
 ==========
 
 ### todo
-1. how to wait timeout
 2. how to cancel
-3. how to implement WaitForAll
 4. in debug mode, WaitHandle(in workThread) is set unexpected, why?
 
 ### done
+2016.04.06 add wait timeout, implement WaitAll
+
 2016.04.05 add result, add wait for result
 
 2016.04.04 add queue strategy, including Never + DropOldest + DropNewest

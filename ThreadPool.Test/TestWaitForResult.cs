@@ -10,11 +10,11 @@ using System.Threading.Tasks;
 namespace ThreadPool.Test
 {
     [TestClass]
-    public class TestReturnResult
+    public class TestWaitForResult
     {
         private IThreadPool _pool;
 
-        public TestReturnResult()
+        public TestWaitForResult()
         {
             StartInfo info = new StartInfo
             {
@@ -26,7 +26,7 @@ namespace ThreadPool.Test
         }
 
         [TestMethod]
-        public void TestResult()
+        public void Test_WaitSingle()
         {
             List<int> list = new List<int>();
             for (int i = 0; i <= 10000; i++)
@@ -35,6 +35,31 @@ namespace ThreadPool.Test
             }
             IWorkItem item = _pool.QueueUserWorkItem(Avg, list);
             Assert.AreEqual(5000, item.GetResult().Result);
+        }
+
+        [TestMethod]
+        public void Test_WaitAll()
+        {
+            bool getAll = false;
+            Thread t = new Thread(() =>
+            {
+                List<int> list = new List<int>();
+                for (int i = 0; i <= 10000; i++)
+                {
+                    list.Add(i);
+                }
+
+                for (int i = 0; i < 10; i++)
+                {
+                    _pool.QueueUserWorkItem(Avg, list);
+                }
+
+                getAll = _pool.WaitAll();
+            });
+            t.SetApartmentState(ApartmentState.MTA);
+            t.Start();
+            t.Join();
+            Assert.IsTrue(getAll);
         }
 
         private Object Avg(Object o)

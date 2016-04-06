@@ -8,9 +8,11 @@ namespace ThreadPool
         WorkItemCallback Callback { get; }
         string Name { get; }
         object State { get; }
-        //TODO: should not expose set, just use GetResult()
+        WaitHandle WaitHandle { get; }
         IWorkResult Result { set; }
 
         IWorkResult GetResult();
+        IWorkResult GetResult(int millisecondsTimeout);
+        IWorkResult GetResult(TimeSpan timeout);
     }
 }

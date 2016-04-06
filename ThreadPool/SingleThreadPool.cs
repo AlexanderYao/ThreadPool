@@ -12,10 +12,12 @@ namespace ThreadPool
 {
     internal class SingleThreadPool : IThreadPool
     {
+        private StartInfo _info;
         private Thread _mainThread;
         private ConcurrentStack<IThread> _threads;
-        private StartInfo _info;
         private ConcurrentQueue<IWorkItem> _queue;
+        //TODO: should we use thread-safe list?
+        private List<WaitHandle> _handles;
         private Int32 _count;
         private Int32 _threadCount;
         private Int32 _maxThreadCount;
@@ -31,6 +33,7 @@ namespace ThreadPool
             _info = info ?? new StartInfo();
             _queue = new ConcurrentQueue<IWorkItem>();
             _threads = new ConcurrentStack<IThread>();
+            _handles = new List<WaitHandle>();
             _event = new AutoResetEvent(false);
             this.Name = name;
 
@@ -116,9 +119,19 @@ namespace ThreadPool
             return item;
         }
 
-        public void WaitForAll()
+        public bool WaitAll()
         {
+            return WaitHandle.WaitAll(_handles.ToArray());
+        }
 
+        public bool WaitAll(int millisecondsTimeout)
+        {
+            return WaitHandle.WaitAll(_handles.ToArray(), millisecondsTimeout);
+        }
+
+        public bool WaitAll(TimeSpan timeout)
+        {
+            return WaitHandle.WaitAll(_handles.ToArray(), timeout);
         }
 
         public void Close()
@@ -157,6 +170,7 @@ namespace ThreadPool
             if (_queue.Count < _info.MaxQueueCount)
             {
                 _queue.Enqueue(item);
+                _handles.Add(item.WaitHandle);
                 Debug.WriteLine("{0} enqueue", new object[] { item.Name });
                 _event.Set();
             }
@@ -166,6 +180,7 @@ namespace ThreadPool
                 {
                     case DropEnum.Never:
                         _queue.Enqueue(item);
+                        _handles.Add(item.WaitHandle);
                         Debug.WriteLine("{0} enqueue", new object[] { item.Name });
                         _event.Set();
                         break;
@@ -176,9 +191,11 @@ namespace ThreadPool
                     case DropEnum.DropOldest:
                         IWorkItem dropItem;
                         bool removeFirst = _queue.TryDequeue(out dropItem);
+                        _handles.Remove(dropItem.WaitHandle);
                         Debug.WriteLine("{0} dropped", new object[] { dropItem.Name });
                         //Assert.IsTrue(removeFirst);
                         _queue.Enqueue(item);
+                        _handles.Add(item.WaitHandle);
                         Debug.WriteLine("{0} enqueue", new object[] { item.Name });
                         _event.Set();
                         break;

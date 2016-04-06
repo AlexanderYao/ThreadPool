@@ -26,7 +26,7 @@ namespace ThreadPool.Sample
             {
                 pool.QueueUserWorkItem(Print, "i'm item " + i, "test");
             }
-            pool.WaitForAll();
+            pool.WaitAll();
         }
 
         static Object Print(Object o)
