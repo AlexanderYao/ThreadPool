@@ -14,5 +14,6 @@ namespace ThreadPool
         IWorkResult GetResult();
         IWorkResult GetResult(int millisecondsTimeout);
         IWorkResult GetResult(TimeSpan timeout);
+        bool Cancel();
     }
 }

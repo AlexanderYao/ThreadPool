@@ -46,5 +46,10 @@ namespace ThreadPool
         {
             return this.GetResult((int)timeout.TotalMilliseconds);
         }
+
+        public bool Cancel()
+        {
+            return true;
+        }
     }
 }
