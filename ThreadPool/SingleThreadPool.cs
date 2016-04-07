@@ -186,14 +186,17 @@ namespace ThreadPool
                         break;
                     case DropEnum.DropNewest:
                         //do nothing, just drop it
+                        item.Result = new WorkResult { Exception = new CancelException() };
                         Debug.WriteLine("{0} dropped", new object[] { item.Name });
                         break;
                     case DropEnum.DropOldest:
                         IWorkItem dropItem;
                         bool removeFirst = _queue.TryDequeue(out dropItem);
-                        _handles.Remove(dropItem.WaitHandle);
-                        Debug.WriteLine("{0} dropped", new object[] { dropItem.Name });
                         //Assert.IsTrue(removeFirst);
+                        _handles.Remove(dropItem.WaitHandle);
+                        dropItem.Result = new WorkResult { Exception = new CancelException() };
+                        Debug.WriteLine("{0} dropped", new object[] { dropItem.Name });
+
                         _queue.Enqueue(item);
                         _handles.Add(item.WaitHandle);
                         Debug.WriteLine("{0} enqueue", new object[] { item.Name });
@@ -260,7 +263,24 @@ namespace ThreadPool
                 for (; i < threads.Count; i++)
                 {
                     IWorkItem workItem;
-                    bool hasItem = _queue.TryPeek(out workItem);
+                    bool hasItem = false;
+
+                    do
+                    {
+                        hasItem = _queue.TryPeek(out workItem);
+
+                        if (hasItem && workItem.IsCancel)
+                        {
+                            bool dropCancel = _queue.TryDequeue(out workItem);
+                            //Assert.IsTrue(dropCancel);
+                            _handles.Remove(workItem.WaitHandle);
+                            workItem.Result = new WorkResult { Exception = new CancelException() };
+                        }
+                        else
+                        {
+                            break;
+                        }
+                    } while (true);
 
                     if (!hasItem)
                     {

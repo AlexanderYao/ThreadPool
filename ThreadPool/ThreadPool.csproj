@@ -30,6 +30,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="CancelException.cs" />
     <Compile Include="IThread.cs" />
     <Compile Include="IThreadPool.cs" />
     <Compile Include="IWorkItem.cs" />

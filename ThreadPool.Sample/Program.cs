@@ -14,7 +14,7 @@ namespace ThreadPool.Sample
     {
         static void Main(string[] args)
         {
-            //TestMyThreadPool();
+            TestMyThreadPool();
             Console.Read();
         }
 
@@ -24,7 +24,7 @@ namespace ThreadPool.Sample
             IThreadPool pool = ThreadPoolFactory.Create(info, "long term pool");
             for (int i = 0; i < 5; i++)
             {
-                pool.QueueUserWorkItem(Print, "i'm item " + i, "test");
+                pool.QueueUserWorkItem(Print, "i'm item " + i, "item" + i);
             }
             pool.WaitAll();
         }

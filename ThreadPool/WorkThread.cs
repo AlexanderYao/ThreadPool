@@ -138,6 +138,12 @@ namespace ThreadPool
                         continue;
                     }
 
+                    if(_item.IsCancel)
+                    {
+                        result.Exception = new CancelException();
+                        continue;
+                    }
+
                     result.Result = _item.Callback.Invoke(_item.State);
                 }
                 catch (Exception ex)

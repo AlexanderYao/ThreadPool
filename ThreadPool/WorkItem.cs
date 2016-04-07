@@ -7,16 +7,19 @@ namespace ThreadPool
     {
         private ManualResetEvent _event;
         private IWorkResult _result;
+        private bool _isCancel;
 
         internal WorkItem()
         {
             _event = new ManualResetEvent(false);
+            _isCancel = false;
         }
 
         public String Name { get; set; }
         public WorkItemCallback Callback { get; set; }
         public Object State { get; set; }
         public WaitHandle WaitHandle { get { return _event; } }
+        public bool IsCancel { get { return _isCancel; } }
 
         public IWorkResult Result
         {
@@ -47,9 +50,9 @@ namespace ThreadPool
             return this.GetResult((int)timeout.TotalMilliseconds);
         }
 
-        public bool Cancel()
+        public void Cancel()
         {
-            return true;
+            _isCancel = true;
         }
     }
 }
