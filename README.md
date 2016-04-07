@@ -2,10 +2,11 @@ ThreadPool
 ==========
 
 ### todo
-2. how to cancel
 4. in debug mode, WaitHandle(in workThread) is set unexpected, why?
 
 ### done
+2016.04.07 add cancel item
+
 2016.04.06 add wait timeout, implement WaitAll
 
 2016.04.05 add result, add wait for result
