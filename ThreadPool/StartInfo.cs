@@ -40,7 +40,7 @@ namespace ThreadPool
         {
             MinWorkerThreads = 2;
             MaxWorkerThreads = 10;
-            DropEnum = DropEnum.DropNewest;
+            DropEnum = DropEnum.Never;
             Timeout = 60;
             AdjustInterval = 1;
             MaxQueueCount = 1000;

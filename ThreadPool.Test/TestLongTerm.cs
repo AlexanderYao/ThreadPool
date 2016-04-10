@@ -32,7 +32,7 @@ namespace ThreadPool.Test
             {
                 _pool.QueueUserWorkItem(Print, "i'm item " + i);
             }
-            _pool.WaitAll();
+            //_pool.WaitAll();
             Thread.Sleep(7000);
             Assert.IsTrue(_pool.MaxThreadCount == 4);
         }
@@ -44,7 +44,7 @@ namespace ThreadPool.Test
             {
                 _pool.QueueUserWorkItem(Print, "i'm item " + i);
             }
-            _pool.WaitAll();
+            //_pool.WaitAll();
             Thread.Sleep(7000);
             Assert.IsTrue(_pool.MaxThreadCount == 5);
         }
@@ -56,7 +56,7 @@ namespace ThreadPool.Test
             {
                 _pool.QueueUserWorkItem(Print, "i'm item " + i);
             }
-            _pool.WaitAll();
+            //_pool.WaitAll();
             Thread.Sleep(15000);
             Assert.IsTrue(_pool.MaxThreadCount == 5);
         }

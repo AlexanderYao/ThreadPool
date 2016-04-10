@@ -64,15 +64,18 @@ namespace ThreadPool
 
         public IWorkItem WorkItem
         {
-            get { return _item; }
+            get
+            {
+                return _item;
+            }
             set
             {
                 if (null == value)
                 {
                     throw new ArgumentNullException();
                 }
-
-                _item = value;
+                
+                Interlocked.Exchange(ref _item, value);
                 Name = value.Name;
                 _event.Set();
             }
@@ -138,7 +141,7 @@ namespace ThreadPool
                         continue;
                     }
 
-                    if(_item.IsCancel)
+                    if (_item.IsCancel)
                     {
                         result.Exception = new CancelException();
                         continue;
@@ -153,9 +156,12 @@ namespace ThreadPool
                 }
                 finally
                 {
-                    _item.Result = result;
-                    OnItemFinished();
-                    _item = null;
+                    if (null != _item)
+                    {
+                        _item.Result = result;
+                        OnItemFinished();
+                        Interlocked.Exchange(ref _item, null);
+                    }
                 }
             }
 

@@ -37,7 +37,7 @@ namespace ThreadPool.Test
             }
             Assert.IsTrue(_pool.QueueCount > _pool.ThreadCount);
 
-            _pool.WaitAll();
+            //_pool.WaitAll();
             Thread.Sleep(3000);
 
             Assert.AreEqual(0, _pool.QueueCount);
