@@ -74,10 +74,13 @@ namespace ThreadPool
                 {
                     throw new ArgumentNullException();
                 }
-                
-                Interlocked.Exchange(ref _item, value);
-                Name = value.Name;
-                _event.Set();
+
+                lock (_syncRoot)
+                {
+                    _item = value;
+                    Name = value.Name;
+                    _event.Set();
+                }
             }
         }
 
@@ -123,44 +126,50 @@ namespace ThreadPool
                 if (null == _item)
                 {
                     bool getIt = _event.WaitOne(_timeout * 1000);
+                    Debug.WriteLine("thread {0}: {1}", Id, getIt ? "get it" : "not get it");
 
                     //min thread will never exit
-                    if (!getIt && !IsMin)
+                    _isStop = !getIt && !IsMin;
+
+                    if (!getIt)
                     {
-                        _isStop = true;
                         continue;
                     }
                 }
 
-                IWorkResult result = new WorkResult();
-                try
+                lock (_syncRoot)
                 {
-                    //in debug mode, _event can be set while _item is still null, why?
-                    if (null == _item)
+                    IWorkResult result = new WorkResult();
+                    try
                     {
-                        continue;
-                    }
+                        //in debug mode, _event can be set while _item is still null, why?
+                        if (null == _item)
+                        {
+                            Debug.WriteLine("thread {0} [{1}]: item is null, continue", Id, IsMin ? "is min" : "is not min");
+                            continue;
+                        }
 
-                    if (_item.IsCancel)
-                    {
-                        result.Exception = new CancelException();
-                        continue;
-                    }
+                        if (_item.IsCancel)
+                        {
+                            result.Exception = new CancelException();
+                            continue;
+                        }
 
-                    result.Result = _item.Callback.Invoke(_item.State);
-                }
-                catch (Exception ex)
-                {
-                    result.Exception = ex;
-                    Debug.WriteLine(ex.Format());
-                }
-                finally
-                {
-                    if (null != _item)
+                        result.Result = _item.Callback.Invoke(_item.State);
+                    }
+                    catch (Exception ex)
                     {
-                        _item.Result = result;
-                        OnItemFinished();
-                        Interlocked.Exchange(ref _item, null);
+                        result.Exception = ex;
+                        Debug.WriteLine(ex.Format());
+                    }
+                    finally
+                    {
+                        if (null != _item)
+                        {
+                            _item.Result = result;
+                            OnItemFinished();
+                            Interlocked.Exchange(ref _item, null);
+                        }
                     }
                 }
             }

@@ -236,14 +236,13 @@ namespace ThreadPool
         private void thread_FinishItem(object sender, EventArgs e)
         {
             _threads.Push(sender as IThread);
-            //_event.Set();
         }
 
         private void Loop()
         {
             while (true)
             {
-                Debug.WriteLine(this);
+                //Debug.WriteLine(this);
                 //adjust pool every 1 sec
                 _event.WaitOne(1000 * _info.AdjustInterval);
 
