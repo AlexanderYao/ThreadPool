@@ -66,7 +66,10 @@ namespace ThreadPool
         {
             get
             {
-                return _item;
+                lock (_syncRoot)
+                {
+                    return _item;
+                }
             }
             set
             {
@@ -108,8 +111,7 @@ namespace ThreadPool
 
         public void Stop()
         {
-            _isStop = true;
-            _event.Set();
+            //do nothing, just wait and exit by itself
         }
 
         public void Dispose()
@@ -123,8 +125,9 @@ namespace ThreadPool
         {
             while (!_isStop)
             {
-                if (null == _item)
+                if (null == WorkItem)
                 {
+                    //may get last Set()
                     bool getIt = _event.WaitOne(_timeout * 1000);
                     Debug.WriteLine("thread {0}: {1}", Id, getIt ? "get it" : "not get it");
 
@@ -136,40 +139,41 @@ namespace ThreadPool
                         continue;
                     }
                 }
-
-                lock (_syncRoot)
+                else
                 {
-                    IWorkResult result = new WorkResult();
-                    try
-                    {
-                        //in debug mode, _event can be set while _item is still null, why?
-                        if (null == _item)
-                        {
-                            Debug.WriteLine("thread {0} [{1}]: item is null, continue", Id, IsMin ? "is min" : "is not min");
-                            continue;
-                        }
+                    Debug.WriteLine("thread {0}: already has it", Id);
+                }
 
-                        if (_item.IsCancel)
-                        {
-                            result.Exception = new CancelException();
-                            continue;
-                        }
+                IWorkResult result = new WorkResult();
+                try
+                {
+                    //may get last Set(), and WorkItem has been done
+                    if (null == WorkItem)
+                    {
+                        Debug.WriteLine("thread {0} [{1}]: item is null, continue", Id, IsMin ? "is min" : "is not min");
+                        continue;
+                    }
 
-                        result.Result = _item.Callback.Invoke(_item.State);
-                    }
-                    catch (Exception ex)
+                    if (WorkItem.IsCancel)
                     {
-                        result.Exception = ex;
-                        Debug.WriteLine(ex.Format());
+                        result.Exception = new CancelException();
+                        continue;
                     }
-                    finally
+
+                    result.Result = WorkItem.Callback.Invoke(WorkItem.State);
+                }
+                catch (Exception ex)
+                {
+                    result.Exception = ex;
+                    Debug.WriteLine(ex.Format());
+                }
+                finally
+                {
+                    if (null != WorkItem)
                     {
-                        if (null != _item)
-                        {
-                            _item.Result = result;
-                            OnItemFinished();
-                            Interlocked.Exchange(ref _item, null);
-                        }
+                        WorkItem.Result = result;
+                        OnItemFinished();
+                        Interlocked.Exchange(ref _item, null);
                     }
                 }
             }
